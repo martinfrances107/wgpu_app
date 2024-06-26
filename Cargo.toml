@@ -1,0 +1,18 @@
+[package]
+name = "learn_wpgu"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pollster = "0.3"
+env_logger = "0.10"
+log = "0.4"
+winit = "0.30.3"
+wgpu = "0.19.3"
+
+cfg-if = "1"
+# the other regular dependencies...
+
