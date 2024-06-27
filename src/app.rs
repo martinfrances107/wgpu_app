@@ -1,5 +1,7 @@
 use core::marker::PhantomData;
 
+use crate::{Vertex, VERTICES};
+use wgpu::util::DeviceExt;
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::{application::ApplicationHandler, window::Window};
 
@@ -15,6 +17,7 @@ pub struct App<'a, T> {
     // unsafe references to the window's resources.
     window: &'a Window,
     render_pipeline: wgpu::RenderPipeline,
+    vertex_buffer: wgpu::Buffer,
 }
 
 impl<'a, T> App<'a, T> {
@@ -100,8 +103,8 @@ impl<'a, T> App<'a, T> {
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
-                entry_point: "vs_main", // 1.
-                buffers: &[],           // 2.
+                entry_point: "vs_main",
+                buffers: &[Vertex::desc()],
             },
             fragment: Some(wgpu::FragmentState {
                 // 3.
@@ -138,6 +141,12 @@ impl<'a, T> App<'a, T> {
             multiview: None, // 5.
         });
 
+        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Vertex Buffer"),
+            contents: bytemuck::cast_slice(VERTICES),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
+
         Self {
             t: PhantomData::<T>,
             window,
@@ -147,6 +156,7 @@ impl<'a, T> App<'a, T> {
             config,
             size,
             render_pipeline,
+            vertex_buffer,
         }
     }
 
@@ -186,8 +196,9 @@ impl<'a, T> App<'a, T> {
                 timestamp_writes: None,
             });
 
-            render_pass.set_pipeline(&self.render_pipeline); // 2.
-            render_pass.draw(0..3, 0..1); // 3.
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.draw(0..3, 0..1);
         }
 
         // submit will accept anything that implements IntoIter
